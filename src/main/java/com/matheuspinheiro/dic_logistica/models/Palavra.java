@@ -29,7 +29,7 @@ public class Palavra {
     @Column(name = "id", unique = true)
     private Long id;
 
-    @Column(name = "palavra", length = 100, nullable = false)
+    @Column(name = "palavra", length = 100, unique = true, nullable = false)
     @NotEmpty(groups = CreatePalavra.class)
     @NotNull(groups = CreatePalavra.class)
     @Size(min = 1, max = 100)

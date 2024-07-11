@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 
 import com.matheuspinheiro.dic_logistica.models.Palavra;
 import com.matheuspinheiro.dic_logistica.repositories.PalavraRepository;
+import com.matheuspinheiro.dic_logistica.services.exceptions.DataBindingViolationException;
+import com.matheuspinheiro.dic_logistica.services.exceptions.ObjectNotFoundException;
 
 import jakarta.transaction.Transactional;
 
@@ -23,13 +25,13 @@ public class DicionarioService {
 
     public Palavra findById(Long id) {
         Optional<Palavra> palavra = this.palavraRepository.findById(id);
-        return palavra.orElseThrow(() -> new RuntimeException(
+        return palavra.orElseThrow(() -> new ObjectNotFoundException(
                 "palavra não encontrada! Id: " + id + ", Tipo: " + Palavra.class.getName()));
     }
 
     public Palavra findByPalavra(String palavra) {
         Optional<Palavra> palavraResultado = this.palavraRepository.findByPalavra(palavra);
-        return palavraResultado.orElseThrow(() -> new RuntimeException(
+        return palavraResultado.orElseThrow(() -> new ObjectNotFoundException(
                 "Palavra não encontrada! palavra: " + palavra + "tipo: " + Palavra.class.getName()));
     }
 
@@ -53,7 +55,7 @@ public class DicionarioService {
         try {
             this.palavraRepository.deleteById(id);
         } catch (Exception e) {
-            throw new RuntimeException("não é possivel deletar pois há entidades relacionadas");
+            throw new DataBindingViolationException("não é possivel deletar pois há entidades relacionadas");
         }
     }
 
