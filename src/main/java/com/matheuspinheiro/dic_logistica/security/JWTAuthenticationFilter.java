@@ -3,14 +3,15 @@ package com.matheuspinheiro.dic_logistica.security;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import org.apache.catalina.User;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matheuspinheiro.dic_logistica.exceptions.GlobalExceptionHandler;
+import com.matheuspinheiro.dic_logistica.models.DTO.UserCreateDTO;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,9 +30,10 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     }
 
     @Override
-    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) {
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
+            throws AuthenticationException {
         try {
-            User userCredentials = new ObjectMapper().readValue(request.getInputStream(), User.class);
+            UserCreateDTO userCredentials = new ObjectMapper().readValue(request.getInputStream(), UserCreateDTO.class);
 
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                     userCredentials.getUsername(), userCredentials.getPassword(), new ArrayList<>());
@@ -43,13 +45,15 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         }
     }
 
-    protected void sucessfulAuthentication(HttpServletRequest request,
+    @Override
+    protected void successfulAuthentication(HttpServletRequest request,
             HttpServletResponse response, FilterChain filterChain, Authentication authentication) {
 
         UserSpringSecurity userSpringSecurity = (UserSpringSecurity) authentication.getPrincipal();
         String username = userSpringSecurity.getUsername();
         String token = this.jwtUtil.generateToken(username);
         response.addHeader("Authorization", "Bearer " + token);
-        response.addHeader("Acess-control-expose-headers", "Authorization");
+        response.addHeader("Acess-Control-Expose-Headers", "Authorization");
+
     }
 }

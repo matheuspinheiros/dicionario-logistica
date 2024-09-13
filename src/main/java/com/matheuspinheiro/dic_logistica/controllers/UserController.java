@@ -16,10 +16,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.matheuspinheiro.dic_logistica.models.User;
-import com.matheuspinheiro.dic_logistica.models.User.CreateUser;
-import com.matheuspinheiro.dic_logistica.models.User.UpdateUser;
+import com.matheuspinheiro.dic_logistica.models.DTO.UserCreateDTO;
+import com.matheuspinheiro.dic_logistica.models.DTO.UserUpdateDTO;
 import com.matheuspinheiro.dic_logistica.services.UserService;
 
+//import io.swagger.v3.oas.annotations.Operation;
+//import io.swagger.v3.oas.annotations.responses.ApiResponse;
+//import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 
 @RestController
@@ -30,6 +33,11 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    // @Operation(description = "Busca o usuário pelo id")
+    // @ApiResponses(value = {
+    // @ApiResponse(responseCode = "200", description = "Retorna o usuário"),
+    // @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
+    // })
     @GetMapping("/{id}")
     public ResponseEntity<User> findById(@PathVariable Long id) {
         User obj = this.userService.findById(id);
@@ -37,21 +45,19 @@ public class UserController {
     }
 
     @PostMapping
-    @Validated(CreateUser.class)
-    public ResponseEntity<Void> create(@Valid @RequestBody User obj) {
-        this.userService.create(obj);
-
+    public ResponseEntity<Void> create(@Valid @RequestBody UserCreateDTO obj) {
+        User user = this.userService.fromDTO(obj);
+        User newUser = this.userService.create(user);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}").buildAndExpand(obj.getId()).toUri();
-
+                .path("/{id}").buildAndExpand(newUser.getId()).toUri();
         return ResponseEntity.created(uri).build();
     }
 
     @PutMapping("/{id}")
-    @Validated(UpdateUser.class)
-    public ResponseEntity<Void> update(@Valid @RequestBody User obj, @PathVariable Long id) {
+    public ResponseEntity<Void> update(@Valid @RequestBody UserUpdateDTO obj, @PathVariable Long id) {
         obj.setId(id);
-        this.userService.update(obj);
+        User user = this.userService.fromDTO(obj);
+        this.userService.update(user);
         return ResponseEntity.noContent().build();
     }
 

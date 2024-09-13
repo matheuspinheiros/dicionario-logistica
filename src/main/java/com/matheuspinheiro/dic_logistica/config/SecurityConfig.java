@@ -44,9 +44,20 @@ public class SecurityConfig {
         private static final String[] PUBLIC_MATCHER_POST = {
                         "/user/**",
                         "/login/**",
-                        "/dicionario/**"
+                        "/dicionario/**",
+                        "/dicionario/palavras",
+                        "/dicionario/palavras/**"
         };
 
+        private static final String[] PUBLIC_MATCHER_GET = {
+                        "/user/**",
+                        "/dicionario/**",
+                        "/dicionario/palavras",
+                        "/dicionario/palavras/**"
+
+        };
+
+        @Bean
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
                 http.cors(AbstractHttpConfigurer::disable)
                                 .csrf(AbstractHttpConfigurer::disable);
@@ -61,11 +72,13 @@ public class SecurityConfig {
                                 .authorizeHttpRequests(authz -> authz
                                                 .requestMatchers(HttpMethod.POST, PUBLIC_MATCHER_POST).permitAll()
                                                 .requestMatchers(PUBLIC_MATCHERS).permitAll()
+                                                .requestMatchers(HttpMethod.GET, PUBLIC_MATCHER_GET)
+                                                .hasAnyRole("USER", "ADMIN")
                                                 .anyRequest().authenticated())
                                 .authenticationManager(authenticationManager)
-                                .addFilter(new JWTAuthenticationFilter(this.authenticationManager, jwtUtil));
+                                .addFilter(new JWTAuthenticationFilter(this.authenticationManager, this.jwtUtil));
                 http
-                                .addFilter(new JWTAuthorizationFilter(this.authenticationManager, jwtUtil,
+                                .addFilter(new JWTAuthorizationFilter(this.authenticationManager, this.jwtUtil,
                                                 this.userDetailsService));
                 http
                                 .sessionManagement(session -> session

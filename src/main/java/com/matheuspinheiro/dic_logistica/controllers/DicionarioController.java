@@ -62,7 +62,7 @@ public class DicionarioController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/palavras/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         this.dicionarioService.delete(id);
         return ResponseEntity.noContent().build();

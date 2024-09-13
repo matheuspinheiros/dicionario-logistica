@@ -1,13 +1,18 @@
 package com.matheuspinheiro.dic_logistica.services;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import com.matheuspinheiro.dic_logistica.models.Palavra;
+import com.matheuspinheiro.dic_logistica.models.enums.ProfileEnum;
 import com.matheuspinheiro.dic_logistica.repositories.PalavraRepository;
+import com.matheuspinheiro.dic_logistica.security.UserSpringSecurity;
+import com.matheuspinheiro.dic_logistica.services.exceptions.AuthorizationException;
 import com.matheuspinheiro.dic_logistica.services.exceptions.DataBindingViolationException;
 import com.matheuspinheiro.dic_logistica.services.exceptions.ObjectNotFoundException;
 
@@ -19,14 +24,24 @@ public class DicionarioService {
     @Autowired
     private PalavraRepository palavraRepository;
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public List<Palavra> findAll() {
-        return palavraRepository.findAll();
+        UserSpringSecurity userSpringSecurity = UserService.authenticated();
+        if (Objects.isNull(userSpringSecurity)) {
+            throw new AuthorizationException("Acesso Negado");
+        }
+        List<Palavra> palavras = this.palavraRepository.findAll();
+        return palavras;
     }
 
     public Palavra findById(Long id) {
-        Optional<Palavra> palavra = this.palavraRepository.findById(id);
-        return palavra.orElseThrow(() -> new ObjectNotFoundException(
-                "palavra não encontrada! Id: " + id + ", Tipo: " + Palavra.class.getName()));
+        Palavra palavra = this.palavraRepository.findById(id).orElseThrow(() -> new ObjectNotFoundException(
+                "Palavra não encontrada! Id: " + id + ", Tipo: " + Palavra.class.getName()));
+        UserSpringSecurity userSpringSecurity = UserService.authenticated();
+        if (Objects.isNull(userSpringSecurity)
+                || !userSpringSecurity.hasRole(ProfileEnum.ADMIN))
+            throw new AuthorizationException("Acesso Negado!");
+        return palavra;
     }
 
     public Palavra findByPalavra(String palavra) {

@@ -1,4 +1,4 @@
-package com.matheuspinheiro.dic_logistica.enums;
+package com.matheuspinheiro.dic_logistica.models.enums;
 
 import java.util.Objects;
 

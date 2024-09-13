@@ -1,20 +1,27 @@
 package com.matheuspinheiro.dic_logistica.services;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.matheuspinheiro.dic_logistica.enums.ProfileEnum;
 import com.matheuspinheiro.dic_logistica.models.User;
+import com.matheuspinheiro.dic_logistica.models.DTO.UserCreateDTO;
+import com.matheuspinheiro.dic_logistica.models.DTO.UserUpdateDTO;
+import com.matheuspinheiro.dic_logistica.models.enums.ProfileEnum;
 import com.matheuspinheiro.dic_logistica.repositories.UserRepository;
+import com.matheuspinheiro.dic_logistica.security.UserSpringSecurity;
+import com.matheuspinheiro.dic_logistica.services.exceptions.AuthorizationException;
 import com.matheuspinheiro.dic_logistica.services.exceptions.DataBindingViolationException;
 import com.matheuspinheiro.dic_logistica.services.exceptions.ObjectNotFoundException;
 
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 
 @Service
 public class UserService {
@@ -26,6 +33,10 @@ public class UserService {
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     public User findById(Long id) {
+        UserSpringSecurity userSpringSecurity = authenticated();
+        if (!Objects.nonNull(userSpringSecurity)
+                || !userSpringSecurity.hasRole(ProfileEnum.ADMIN) && !id.equals(userSpringSecurity.getId()))
+            throw new AuthorizationException("Acesso Negado!");
         Optional<User> user = this.userRepository.findById(id);
         return user.orElseThrow(() -> new ObjectNotFoundException(
                 "Usuario não encontrado! Id: " + id + "Tipo: " + User.class.getName()));
@@ -44,6 +55,7 @@ public class UserService {
     public User update(User obj) {
         User newObj = findById(obj.getId());
         newObj.setPassword(obj.getPassword());
+        newObj.setPassword(this.bCryptPasswordEncoder.encode(obj.getPassword()));
         return this.userRepository.save(newObj);
     }
 
@@ -54,6 +66,28 @@ public class UserService {
         } catch (Exception e) {
             throw new DataBindingViolationException("Não é possivel excluir o usuário pois há entidades relacionadas!");
         }
+    }
+
+    public static UserSpringSecurity authenticated() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserSpringSecurity) {
+            return (UserSpringSecurity) principal;
+        }
+        return null;
+    }
+
+    public User fromDTO(@Valid UserCreateDTO obj) {
+        User user = new User();
+        user.setUsername(obj.getUsername());
+        user.setPassword(obj.getPassword());
+        return user;
+    }
+
+    public User fromDTO(@Valid UserUpdateDTO obj) {
+        User user = new User();
+        user.setId(obj.getId());
+        user.setPassword(obj.getPassword());
+        return user;
     }
 
 }

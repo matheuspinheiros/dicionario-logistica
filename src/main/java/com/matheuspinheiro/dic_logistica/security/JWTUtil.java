@@ -1,7 +1,5 @@
 package com.matheuspinheiro.dic_logistica.security;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Objects;
 
@@ -21,17 +19,18 @@ public class JWTUtil {
     private String secret;
 
     @Value("${jwt.expiration}")
-    private String expiration;
+    private Long expiration;
 
     public String generateToken(String username) {
         SecretKey key = getKeyBySecret();
-        Instant now = Instant.now();
-        long expirationMillis = Long.parseLong(this.expiration);
-        Instant expirationTime = now.plus(expirationMillis, ChronoUnit.MILLIS);
+        // Instant now = Instant.now();
+        // long expirationMillis = Long.parseLong(this.expiration);
+        // Instant expirationTime = now.plus(expirationMillis, ChronoUnit.MILLIS);
+        Date expirationDate = new Date(System.currentTimeMillis() + expiration);
 
         return Jwts.builder()
                 .setSubject(username)
-                .setExpiration(Date.from(expirationTime))
+                .setExpiration(expirationDate)
                 .signWith(key)
                 .compact();
     }
